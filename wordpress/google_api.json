@@ -1,0 +1,13 @@
+{
+    "web": {
+        "client_id": "773168103023-dkf3upe4jb4dbr824slhl76dj8c97n0t.apps.googleusercontent.com",
+        "project_id": "system-seo-1599616773371",
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+        "client_secret": "t8oS8XSwN5PqHoVSaxFwNa2s",
+        "redirect_uris": [
+            "http://localhost:8080/wordpress/craw.class.php"
+        ]
+    }
+}
