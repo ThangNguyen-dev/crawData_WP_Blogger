@@ -65,7 +65,7 @@ class crawl
 
         // $this->inputWebsiteCrawl();
 
-        $this->bridge();
+        // $this->bridge();
 
         // $this->createGoogleClient();
 
@@ -231,6 +231,9 @@ class crawl
             'status' => 'LIVE',
         );
         $listBlogger = $this->blogger->blogs->listByUser('self', $parramArray);
+        echo '<pre>';
+        print_r($listBlogger);
+        echo '</pre>';
 
         foreach ($listBlogger as $key => $value) {
             array_push($this->arrayIDBlogger, $listBlogger[$key]['id']);
@@ -494,14 +497,11 @@ class crawl
             }
         };
 
-
         //if content empty is not save
         if (!empty($content)) {
             $this->post_content = strip_tags($content, '<p> <img> <h1> <h2> <h3> <br/>');
             //set title
             $this->setTitle($html);
-
-
 
             //post data to all blogger
             // foreach ($this->arrayIDBlogger as $Idblogger) {
