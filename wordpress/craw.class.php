@@ -14,7 +14,6 @@ require_once 'GoogleAPI/vendor/autoload.php';
 define("DEFAULT_LINK", "{$_SERVER['HTTP_HOST']}/wordpress/wordpress");
 define('charset', 'utf8');
 
-
 class crawl
 {
     private $post_content;
@@ -26,6 +25,9 @@ class crawl
     private $oldLink;
     private $id_web;
     private $newsClass;
+    private $idWeb;
+    private $loopKey;
+    private $idWebArray = array();
     private $webiste = array();
 
     private $userGoogle = array();
@@ -38,9 +40,9 @@ class crawl
 
     private $refreshTokenArray = array();
     private $arrayIDBlogger = array();
-    private $arrayLink = array('https://vietnamnet.vn/vn/bat-dong-san/');
-    private $arrayNew = array('.clearfix.item a');
-    private $arrayArticle = array('.ArticleContent');
+    private $arrayLink = array();
+    private $arrayNew = array();
+    private $arrayArticle = array();
 
     public function __construct()
     {
@@ -61,7 +63,7 @@ class crawl
 
         $this->getTime();
 
-        $this->inputWebsiteCrawl();
+        // $this->inputWebsiteCrawl();
 
         $this->bridge();
 
@@ -87,7 +89,6 @@ class crawl
          * check link website isset in database
          * return link news isset in database or false if don't have ít
          */
-        $this->checkNews($this->convert_vi_to_en($this->link));
         $this->setContent();
     }
 
@@ -275,21 +276,21 @@ class crawl
      */
     public function setNews()
     {
-        foreach ($this->arrayLink as $url) {
-
+        /**
+         * loop to get news class and id web
+         */
+        foreach ($this->arrayLink as $key => $url) {
+            $this->loopKey = $key;
             //get html from url
             $html = file_get_html($url);
             $this->url = $url;
-            //loop to get newsclass
-            foreach ($this->arrayNew as $newsClass) {
-                if (!empty($html->find($newsClass))) {
-                    $this->newsClass = $newsClass;
-                    //get class news
-                    $tin = $html->find($newsClass);
-                    break;
-                }
-            }
-            $this->getDomain();
+
+            $this->id_web = $this->idWebArray[$this->loopKey];
+            $this->newsClass = $this->arrayNew[$this->loopKey];
+
+            //get class news
+            $tin = $html->find($this->arrayNew[$this->loopKey]);
+            $this->getDomain($url);
 
             //set result query
             $reLink = 0;
@@ -315,6 +316,11 @@ class crawl
             }
         }
     }
+
+    /**
+     * remove charater '/' in latest url
+     * @return $url was remove character backslack Url
+     */
     private function removeBackslachInUrl($url)
     {
         if (substr($url, 0, 1) == '/') {
@@ -325,22 +331,22 @@ class crawl
     }
 
     /**
-     * check link is isset in database
+     * @return true if isset url in news database
      */
-    public function checkNews($link)
+    public function isSameArticleLink($linkArticle)
     {
-
         //query database url from database to the same
-        $sql = "SELECT COUNT(ID) FROM seo_posts WHERE post_name = '" . $link . "'";
+        $sql = "SELECT COUNT(ID), link_article FROM seo_link_get_article WHERE link_article  = '" . $linkArticle . "'";
 
-        //check isse news in database
-        // $result = $this->db->query($sql);
-        $result = false;
+        $result = $this->db->query($sql);
         if ($result) {
             while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-                $_result = $row['COUNT(ID)'];
+                if ($_result = $row['COUNT(ID)'] > 0) {
+                    return $_result;
+                } else {
+                    return false;
+                }
             }
-            return $_result;
         } else {
             return false;
         }
@@ -395,7 +401,6 @@ class crawl
         }
     }
 
-
     /**
      * remove character ? in url
      * example: C:\xampp\htdocs\wordpress/wp-content/uploads/2021/05thi-diem-thu-thue-tu-viec-cho-thue-can-ho-mat-bang-kinh-doanh-o-chung-cu.JPG?w=145&h=101
@@ -433,61 +438,72 @@ class crawl
         }
     }
 
+    /**
+     * get content from database
+     * @return void data
+     */
     public function setContent()
     {
         $content = '';
+
         //check the same link
-        $temp = explode('#', $this->linkArticle);
-        if ($this->isSameURL($this->url) == false) {
-            //check true link - have a website
-            if ($this->oldLink != $temp[0]) {
-                //refer to inserted now to check isset.
-                $this->oldLink = $this->linkArticle;
-                //real link is return header is 200
-                if ($this->realURL() == 200) {
-                    $html = file_get_html($this->linkArticle);
-                    foreach ($this->arrayArticle as $item) {
-                        $this->insertUrlArticle($this->newsClass, $item);
+        if (!$this->isSameArticleLink($this->linkArticle)) {
+
+            $temp = explode('#', $this->linkArticle);
+            if ($this->isSameURL($this->url) == false) {
+
+                //check true link - have a website
+                if ($this->oldLink != $temp[0]) {
+
+                    //refer to inserted now to check isset.
+                    $this->oldLink = $this->linkArticle;
+
+                    //real link is return header is 200
+                    if ($this->realURL() == 200) {
+
+                        $html = file_get_html($this->linkArticle);
 
                         // check content find isset to refer to $tin
-                        if (!empty($html->find($item))) {
-                            $tin = $html->find($item);
-                            break;
+                        $tin = $html->find($this->arrayArticle[$this->loopKey]);
+                        //display error
+                        error_reporting(E_ERROR | E_PARSE);
+
+                        foreach ($tin as $article) {
+                            echo 1;
+                            // issert link website got from database
+
+                            foreach ($article->find('img') as $img) {
+                                echo 2 . '<hr/>';
+                                //check data src (dynamic src.)
+                                if (!empty($find = $img->getAttribute('data-src'))) {
+                                    // get attribute data-src if isset
+
+                                    $find = $img->getAttribute('data-src');
+                                    $this->getImg($find, $img);
+                                } else {
+
+                                    //get attribute src if isset
+                                    $find = $img->getAttribute('src');
+                                    $this->getImg($find, $img);
+                                }
+                            };
+                            $content = $article;
                         }
-                    }
-                    //display error
-                    error_reporting(E_ERROR | E_PARSE);
-
-                    foreach ($tin as $article) {
-
-                        // issert link website got from database
-
-                        foreach ($article->find('img') as $img) {
-
-                            //check data src (dynamic src.)
-                            if (!empty($find = $img->getAttribute('data-src'))) {
-                                // get attribute data-src if isset
-
-                                $find = $img->getAttribute('data-src');
-                                $this->getImg($find, $img);
-                            } else {
-
-                                //get attribute src if isset
-                                $find = $img->getAttribute('src');
-                                $this->getImg($find, $img);
-                            }
-                        };
-                        $content = $article;
                     }
                 }
             }
-        }
+        };
+
 
         //if content empty is not save
         if (!empty($content)) {
             $this->post_content = strip_tags($content, '<p> <img> <h1> <h2> <h3> <br/>');
             //set title
             $this->setTitle($html);
+
+
+
+            //post data to all blogger
             // foreach ($this->arrayIDBlogger as $Idblogger) {
             //     $this->postNewsBlogger(
             //         $this->getTitle(),
@@ -509,24 +525,27 @@ class crawl
             );
 
             // insert posts to database
-            wp_insert_post($arrayPost, true);
+            if (wp_insert_post($arrayPost, true)) {
+                //insert link artivle to database to check the same url article in future
+                $this->insertUrlArticle($this->linkArticle);
+            };
             exit();
         }
     }
     /**
      * set Domain to save img for dynamic src
      */
-    public function getDomain()
+    public function getDomain($url)
     {
         //explode url for get domain
-        $urlExplode = explode('/', $this->url);
+        $urlExplode = explode('/', $url);
 
         // get domain
         return $this->domain = $urlExplode[0] . '//' . $urlExplode[1] . $urlExplode[2];
     }
 
     //insert url article to database to check the same in future
-    public function insertUrlArticle($newsClass)
+    public function insertUrlArticle($link_article)
     {
         // $id_user_current = get_current_user_id();
         $sql = "INSERT INTO `seo_link_get_article`
@@ -535,7 +554,7 @@ class crawl
             `link_article`
         ) VALUES(
             '{$this->id_web}',
-            '{$newsClass}',
+            '{$link_article}'
         )";
 
         /**
@@ -681,6 +700,7 @@ class crawl
          * row is all value
          */
         while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+            array_push($this->idWebArray, $row['id_web']);
             array_push($this->arrayLink, $row['link_news']);
             array_push($this->arrayNew, $row['class_news']);
             array_push($this->arrayArticle, $row['class_article']);
