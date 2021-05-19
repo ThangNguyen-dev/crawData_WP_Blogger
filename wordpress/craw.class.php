@@ -48,22 +48,21 @@ class crawl
     {
         set_time_limit(0);
         $this->connectDB();
-        $this->getAccessTokenFromDB();
+        $this->getTime();
 
+        // $this->getAccessTokenFromDB();
         //return array ID blogger to login
-        $this->getIDBloggerFromGoogle();
+        // $this->getIDBloggerFromGoogle();
 
         /**
          * get website from database
          * this is list website isset in database to get news
          * */
 
-        $this->getWebsiteNewsFromDB();
-        $this->setNews();
+        // $this->getWebsiteNewsFromDB();
+        // $this->setNews();
 
-        $this->getTime();
-
-        // $this->inputWebsiteCrawl();
+        $this->inputWebsiteCrawl();
 
         // $this->bridge();
 
@@ -499,6 +498,7 @@ class crawl
 
         //if content empty is not save
         if (!empty($content)) {
+            echo $content . '<hr/>';
             $this->post_content = strip_tags($content, '<p> <img> <h1> <h2> <h3> <br/>');
             //set title
             $this->setTitle($html);
