@@ -11,7 +11,7 @@ require_once 'wp-includes/pluggable-deprecated.php';
 require_once 'GoogleAPI/vendor/autoload.php';
 // require_once 'wp-includes/userGoogle.class.php';
 
-define("DEFAULT_LINK", "{$_SERVER['HTTP_HOST']}/wordpress/");
+define("DEFAULT_LINK", "{$_SERVER['HTTP_HOST']}/wordpress/wordpress");
 define('charset', 'utf8');
 
 
@@ -207,12 +207,6 @@ class crawl
         $postBlogger->title = $post_title;
         $postBlogger->content = $post_content;
         $postBlogger->labels = $post_label;
-
-        // $arrayData = array(
-        //     'title' => $this->getTitle(),
-        //     'content' => $this->getContent(),
-        //     'id_blogger' => $idBlogger,
-        // );
 
         $post = $blogger->posts->insert($idBlogger, $postBlogger);
         // if ($post) {
@@ -549,15 +543,15 @@ class crawl
          * return true if insert sessuces
          * */
 
-        // if (isset($this->db)) {
-        //     // insert url in database to check the same link
-        //     $result = $this->db->query($sql);
-        //     if (isset($result)) {
-        //         return true;
-        //     } else {
-        //         return false;
-        //     }
-        // }
+        if (isset($this->db)) {
+            // insert url in database to check the same link
+            $result = $this->db->query($sql);
+            if (isset($result)) {
+                return true;
+            } else {
+                return false;
+            }
+        }
     }
 
     public function realURL()
