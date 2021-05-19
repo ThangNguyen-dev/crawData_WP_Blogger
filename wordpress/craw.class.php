@@ -84,10 +84,6 @@ class crawl
      */
     public function bridge()
     {
-        /**
-         * check link website isset in database
-         * return link news isset in database or false if don't have ít
-         */
         $this->setContent();
     }
 
@@ -97,7 +93,7 @@ class crawl
 
             array_push($this->arrayNew, '.' . $_POST['classNews']);
             array_push($this->arrayArticle, '.' . $_POST['classArticle']);
-            array_push($this->arrayLink, '.' . $_POST['linkNews']);
+            array_push($this->arrayLink, $_POST['linkNews']);
             $this->setNews();
         } elseif (isset($_POST['insert'])) {
             $userId_current = get_current_user_id();
@@ -291,7 +287,12 @@ class crawl
             $this->newsClass = $this->arrayNew[$this->loopKey];
 
             //get class news
-            $tin = $html->find($this->arrayNew[$this->loopKey]);
+            if (!empty($html->find($this->arrayNew[$this->loopKey]))) {
+                $tin = $html->find($this->arrayNew[$this->loopKey]);
+            } else {
+                break;
+            }
+
             $this->getDomain($url);
 
             //set result query
@@ -498,8 +499,8 @@ class crawl
 
         //if content empty is not save
         if (!empty($content)) {
-            echo $content . '<hr/>';
-            $this->post_content = strip_tags($content, '<p> <img> <h1> <h2> <h3> <br/>');
+            echo strip_tags($content, '<p> <img> <h1> <h2> <h3> <br/> <figure>');
+            $this->post_content = strip_tags($content, '<p> <img> <h1> <h2> <h3> <br/> <figure>');
             //set title
             $this->setTitle($html);
 
@@ -525,10 +526,10 @@ class crawl
             );
 
             // insert posts to database
-            if (wp_insert_post($arrayPost, true)) {
-                //insert link artivle to database to check the same url article in future
-                $this->insertUrlArticle($this->linkArticle);
-            };
+            // if (wp_insert_post($arrayPost, true)) {
+            //     //insert link artivle to database to check the same url article in future
+            //     $this->insertUrlArticle($this->linkArticle);
+            // };
             exit();
         }
     }
@@ -562,6 +563,7 @@ class crawl
          * return true if insert sessuces
          * */
 
+         echo $sql;
         if (isset($this->db)) {
             // insert url in database to check the same link
             $result = $this->db->query($sql);
