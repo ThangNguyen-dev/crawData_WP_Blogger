@@ -531,7 +531,7 @@ class crawl
         return $this->domain = $urlExplode[0] . '//' . $urlExplode[1] . $urlExplode[2];
     }
 
-    //insert url to database to check the same in future
+    //insert url article to database to check the same in future
     public function insertUrlArticle($newsClass)
     {
         // $id_user_current = get_current_user_id();
